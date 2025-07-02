@@ -86,7 +86,7 @@ function App() {
   };
 
   const fetchVideoData = async (videoId: string) => {
-    const API_KEY = 'AIzaSyAURdq7QTq4UbIOtRztU8qL6Q5BAwsvefg';
+    const API_KEY = 'AIzaSyBw13DGsQcizr6fLyV-noP3ghNgY7qZPUI';
 
     try {
       const videoResponse = await fetch(
