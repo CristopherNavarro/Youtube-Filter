@@ -437,7 +437,7 @@ function App() {
         <div className="container mx-auto">
           <h1 className="text-3xl font-bold flex items-center">
             <BarChart3 className="mr-2" />
-            Analizador de Videos de YouTube
+ YouTube Filter
           </h1>
           <p className="mt-2 opacity-90">
             Evalúa videos según recencia, compromiso y viralidad
