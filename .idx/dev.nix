@@ -19,23 +19,24 @@
   ];
 
   # Enable previews and customize configuration
- idx.previews = {
+  idx.previews = {
     enable = true;
     previews = {
       web = {
         command = [
           "npm"
           "run"
-          "start"
+          "dev"
           "--"
           "--port"
           "$PORT"
           "--host"
           "0.0.0.0"
-          "--disable-host-check"
         ];
         manager = "web";
+        # Especifica el directorio que contiene tu package.json
         cwd = "project"; 
       };
     };
   };
+} # <--- FALTA ESTA LLAVE DE CIERRE EN TU CÓDIGO
