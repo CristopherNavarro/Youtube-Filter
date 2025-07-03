@@ -247,8 +247,10 @@ function App() {
   };
 
   const clearCurrentAnalysis = () => {
+    console.log("Clearing videos");
     if (confirm('¿Está seguro que desea borrar el análisis actual?')) {
       setVideos([]);
+      console.log("Videos state after clear:", videos);
       setShowResults(false);
       setSaveName('');
     }
@@ -324,43 +326,48 @@ function App() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const readers = Array.from(files).map(file => {
-      return new Promise<ExportData>((resolve, reject) => {
+    const importedAnalyses: AnalysisHistory[] = [];
+    const errors: string[] = [];
+
+    const processFile = (file: File) => {
+      return new Promise<void>((resolve) => {
         const reader = new FileReader();
         reader.onload = async (event) => {
           try {
             const importedData = JSON.parse(event.target?.result as string) as ExportData;
             if (!importedData.version || !importedData.analysis || !Array.isArray(importedData.analysis.videos)) {
-              throw new Error(`Formato de archivo inválido: ${file.name}`);
+              throw new Error(`Formato de archivo inválido.`);
             }
-            resolve(importedData);
+            
+            const analysisName = importedData.analysis.name || file.name.replace(/\.json$/, '') || `Análisis Importado ${new Date().toLocaleString()}`;
+
+            importedAnalyses.push({
+              id: Date.now().toString() + importedAnalyses.length, // Simple unique ID
+              name: analysisName,
+              date: new Date().toISOString(),
+              videos: importedData.analysis.videos,
+              showResults: importedData.analysis.showResults,
+            });
           } catch (error) {
-            reject(new Error(`Error al procesar ${file.name}: ${error instanceof Error ? error.message : 'Formato inválido'}`));
+            errors.push(`Error al procesar ${file.name}: ${error instanceof Error ? error.message : 'Formato inválido'}`);
+          } finally {
+            resolve();
           }
         };
         reader.readAsText(file);
       });
-    });
+    };
 
-    Promise.all(readers)
-      .then(importedDataArray => {
-        const allVideos = importedDataArray.flatMap(data => data.analysis.videos);
-        const uniqueVideos = allVideos.filter((video, index, self) =>
-          index === self.findIndex(v => v.url === video.url)
-        );
-        
-        setVideos(prevVideos => {
-          const existingUrls = new Set(prevVideos.map(v => v.url));
-          const newVideos = uniqueVideos.filter(video => !existingUrls.has(video.url));
-          return [...prevVideos, ...newVideos];
-        });
-        
-        if (importedDataArray.length === 1) {
-          setSaveName(importedDataArray[0].analysis.name);
+    Promise.all(Array.from(files).map(processFile))
+      .then(() => {
+        if (importedAnalyses.length > 0) {
+          setHistory(prevHistory => [...prevHistory, ...importedAnalyses]);
+          alert(`Se importaron ${importedAnalyses.length} análisis correctamente.`);
         }
-        setShowResults(true);
         
-        alert(`Se importaron ${uniqueVideos.length} videos únicos de ${importedDataArray.length} archivo(s)`);
+        if (errors.length > 0) {
+          alert('Errores durante la importación:\n' + errors.join('\n'));
+        }
       })
       .catch(error => {
         alert('Error al importar archivos: ' + error.message);
@@ -462,7 +469,7 @@ function App() {
             >
               <Upload size={18} className="mr-1" />
               Importar Análisis
-            </button>
+            </button>{' '}
             <input 
               type="file" 
               ref={fileInputRef} 
